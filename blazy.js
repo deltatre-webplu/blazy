@@ -61,6 +61,7 @@
         scope.options.saveViewportOffsetDelay = scope.options.saveViewportOffsetDelay || 50;
         scope.options.srcset = scope.options.srcset || 'data-srcset';
         scope.options.src = _source = scope.options.src || 'data-src';
+        scope.options.disablePreload = scope.options.disablePreload || false;
         _supportClosest = Element.prototype.closest;
         _isRetina = window.devicePixelRatio > 1;
         _viewport = {};
@@ -213,12 +214,14 @@
                 var isPicture = parent && equal(parent, 'picture');
                 // Image or background image
                 if (isImage || ele.src === undefined) {
-                    var img = new Image();
+                    var img = options.disablePreload ? ele : new Image();
                     // using EventListener instead of onerror and onload
                     // due to bug introduced in chrome v50 
                     // (https://productforums.google.com/forum/#!topic/chrome/p51Lk7vnP2o)
                     var onErrorHandler = function() {
-                        if (options.error) options.error(ele, "invalid");
+                        if (options.error) {
+                            options.error(ele, "invalid");
+                        }
                         addClass(ele, options.errorClass);
                         unbindEvent(img, 'error', onErrorHandler);
                         unbindEvent(img, 'load', onLoadHandler);
@@ -226,7 +229,7 @@
                     var onLoadHandler = function() {
                         // Is element an image
                         if (isImage) {
-                            if(!isPicture) {
+                            if(!isPicture && !options.disablePreload) {
                                 handleSources(ele, src, srcset);
                             }
                         // or background-image
